@@ -1,15 +1,11 @@
-class Empleado:
+from datetime import date
 
-    def __init__(self, rut, nombre, fecha_ingreso, sueldo_base):
+class Empleado:
+    def __init__(self, rut: str, nombre: str, fecha_ingreso: date, sueldo_base: int):
         self.rut = rut
         self.nombre = nombre
         self.fecha_ingreso = fecha_ingreso
         self.sueldo_base = sueldo_base
-        self.registros = []
-        self.departamento = None
 
-    def registrar_hora(self, registro):
-        self.registros.append(registro)
-
-    def total_horas(self):
-        return sum(reg.horas for reg in self.registros)
+    def __repr__(self):
+        return f"Empleado(rut='{self.rut}', nombre='{self.nombre}', sueldo_base={self.sueldo_base})"

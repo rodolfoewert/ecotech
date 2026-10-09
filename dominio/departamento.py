@@ -1,9 +1,7 @@
 class Departamento:
-
-    def __init__(self, nombre):
+    def __init__(self, nombre: str, id: int = None):
+        self.id = id
         self.nombre = nombre
-        self.empleados = []
 
-    def agregar_empleado(self, empleado):
-        self.empleados.append(empleado)
-        empleado.departamento = self
+    def __repr__(self):
+        return f"Departamento(id={self.id}, nombre='{self.nombre}')"
