@@ -1,6 +1,7 @@
 import sqlite3
 from datetime import date
 from dominio.empleado import Empleado
+from dominio.empleado_planta import EmpleadoPlanta
 from dominio.excepciones import RutDuplicado, RelacionInvalida
 from infraestructura.conexion import obtener_conexion
 
@@ -8,7 +9,7 @@ class EmpleadoRepositorio:
 
     @staticmethod
     def _fila_a_empleado(fila):
-        return Empleado(
+        return EmpleadoPlanta(
             rut=fila[0],
             nombre=fila[1],
             fecha_ingreso=date.fromisoformat(fila[2]),

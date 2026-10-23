@@ -1,6 +1,6 @@
 from datetime import date
 import os
-from dominio.empleado import Empleado
+from dominio.empleado_planta import EmpleadoPlanta
 from dominio.departamento import Departamento
 from infraestructura.conexion import ErrorDeConexion, obtener_conexion
 from dominio.excepciones import RutDuplicado, RelacionInvalida
@@ -23,7 +23,7 @@ def ejecutar_laboratorio():
     repo_emp = EmpleadoRepositorio()
 
     print("--- 1. CREAR ---")
-    ana = Empleado("12345678-9", "Ana Rojas", date(2024, 3, 1), 950_000)
+    ana = EmpleadoPlanta("12345678-9", "Ana Rojas", date(2024, 3, 1), 950_000)
     repo_emp.guardar(ana)
     print(f"Guardado: {ana}")
 

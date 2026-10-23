@@ -9,7 +9,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from dominio.departamento import Departamento
-from dominio.empleado import Empleado
+from dominio.empleado_planta import EmpleadoPlanta
 from dominio.excepciones import RelacionInvalida, RutDuplicado
 from infraestructura.conexion import ErrorDeConexion, obtener_conexion
 from infraestructura.departamento_repositorio import DepartamentoRepositorio
@@ -31,7 +31,7 @@ class PruebasPersistencia(unittest.TestCase):
         self.addCleanup(self.entorno.stop)
         inicializar_bd()
         self.repo = EmpleadoRepositorio()
-        self.ana = Empleado("12345678-9", "Ana", date(2024, 3, 1), 950000)
+        self.ana = EmpleadoPlanta("12345678-9", "Ana", date(2024, 3, 1), 950000)
 
     def test_crud_empleado(self):
         self.repo.guardar(self.ana)
