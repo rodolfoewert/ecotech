@@ -97,8 +97,8 @@ ese límite, aunque trabaje en proyectos diferentes.
 | Identificadores | La base asigna los id numéricos; el RUT identifica al empleado. |
 
 El dominio no ejecuta SQL. Los repositorios usan parámetros y reconstruyen
-objetos con funciones de mapeo. El SQL dinámico de la migración utiliza únicamente
-nombres y definiciones constantes, nunca entradas del usuario.
+objetos con funciones de mapeo. La migración usa sentencias completas y fijas,
+sin construir SQL con f-strings ni entradas del usuario.
 La conexión hace commit o rollback y siempre se cierra. Un RUT duplicado se
 informa con `RutDuplicado`, una relación inválida con `RelacionInvalida` y un
 problema de acceso a SQLite con `ErrorDeConexion`.
