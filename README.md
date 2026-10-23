@@ -11,16 +11,23 @@ Desde la carpeta del repositorio:
 python -m venv .venv
 .venv\Scripts\activate
 python -m pip install -r requirements.txt
-Copy-Item .env.example .env
+python configurar.py
 python main.py
 ```
 
 El archivo `.env` debe tener `DB_MOTOR=sqlite` y `DB_NOMBRE=ecotech.db`.
-Si ya tienes `.env`, conserva tu configuración y no lo copies encima.
+`configurar.py` crea `.env` y genera una clave de cifrado si falta.
+Si ya hay una clave, la conserva. No reemplaces esa clave si ya tienes contactos
+cifrados: se necesita para volver a leerlos. `.env` y `.venv` quedan fuera de Git.
 El esquema se crea al iniciar. Si la base es la versión anterior del proyecto,
 se agregan las columnas nuevas sin borrar sus filas. Los contratos antiguos se
 interpretan como empleados de planta con bono cero. Las descripciones antiguas
 vacías se muestran como registros anteriores sin descripción.
+
+En VS Code, usa **Python: Select Interpreter** y elige `.venv\Scripts\python.exe`.
+Si aparece `No module named dotenv`, estás usando otro intérprete o faltan
+las dependencias. Ejecuta `.venv\Scripts\python.exe -m pip install -r requirements.txt`
+y usa ese mismo Python para correr el proyecto.
 
 Para ver el ejemplo completo sin modificar la base de trabajo:
 
@@ -41,6 +48,23 @@ permitiendo empleados sin departamento para leer los datos de la versión de cla
 Las jornadas se leen junto al empleado para reconstruir sus proyectos y calcular
 su pago con las horas guardadas. `ProyectoRepositorio` carga los datos propios del
 proyecto; sus colecciones no representan un informe global de todos los empleados.
+
+## Inicio de sesión
+
+La primera ejecución pide crear un administrador con contraseña de al menos
+10 caracteres. Después se inicia sesión con esa cuenta. El administrador puede
+crear usuarios desde la opción 10. El rol `consulta` solo puede consultar empleados;
+el rol `admin` puede gestionar datos y crear cuentas.
+
+Las contraseñas no se guardan como texto. Se guarda un hash PBKDF2 con una sal
+aleatoria por usuario. Dirección, teléfono y correo se cifran con Fernet antes de
+escribirlos en SQLite y se recuperan al reconstruir el objeto. La clave está en
+`.env`, separada de las filas de la base. Los datos de contacto de versiones
+anteriores se cifran al inicializar el esquema.
+
+Los permisos controlan el uso del menú. El acceso a los archivos locales y a la
+clave también depende de los permisos de tu cuenta de Windows. RUT, nombre,
+sueldos y horas permanecen sin cifrar; el cifrado implementado cubre los contactos.
 
 ## Clases y pagos
 
@@ -86,7 +110,8 @@ python -m unittest discover -s pruebas -v
 ```
 
 Las pruebas usan archivos temporales. Comprueban CRUD, contratos, validaciones,
-relaciones, inyección SQL, cascada, rollback y actualización de una base antigua.
+relaciones, inyección SQL, cascada, rollback, actualización de una base antigua,
+inicio de sesión, permisos por rol y cifrado de contactos.
 
 ## Diferencias y pendientes del UML de la evaluación 1
 
@@ -97,9 +122,10 @@ en lugar del id_empleado numérico del UML. Los nombres `fecha_ingreso` y
 Las clases de dominio no crean filas: los métodos de creación de datos están en
 los repositorios para mantener la separación de responsabilidades.
 
-Todavía falta implementar autenticación, autorización por roles y cifrado de
-los datos sensibles declarados en el UML. Los atributos protegidos y las
-propiedades validan cambios dentro del programa; no sustituyen esos mecanismos.
+`GestorAutenticacion` implementa inicio de sesión, revisión de rol y acceso al
+cifrado. La autenticación guarda un hash por cuenta en lugar del atributo global
+`hash_sistema` del UML. Las propiedades validan cambios, mientras que el inicio
+de sesión y los permisos se controlan por separado.
 Las bases antiguas conservan sus tipos de columnas y restricciones originales:
 la actualización agrega columnas y relaciones, pero no reconstruye las tablas.
 También falta cerrar con el equipo la correspondencia final del UML y registrar

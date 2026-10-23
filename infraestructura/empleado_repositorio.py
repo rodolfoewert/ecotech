@@ -8,6 +8,7 @@ from dominio.excepciones import RutDuplicado, RelacionInvalida
 from dominio.proyecto import Proyecto
 from dominio.registro_tiempo import RegistroTiempo
 from infraestructura.conexion import obtener_conexion
+from seguridad.cifrado import cifrar, descifrar
 
 CONSULTA = """SELECT p.rut, p.nombre, e.fecha_ingreso, e.sueldo_base,
               e.direccion, e.telefono, e.email, e.tipo_contrato, e.bono, e.tarifa,
@@ -26,9 +27,9 @@ class EmpleadoRepositorio:
         nombre = fila[1]
         fecha = date.fromisoformat(fila[2])
         sueldo = fila[3]
-        direccion = fila[4]
-        telefono = fila[5]
-        correo = fila[6]
+        direccion = descifrar(fila[4])
+        telefono = descifrar(fila[5])
+        correo = descifrar(fila[6])
         tipo = fila[7]
         if tipo == "planta":
             empleado = EmpleadoPlanta(rut, nombre, fecha, sueldo, fila[8],
@@ -57,7 +58,7 @@ class EmpleadoRepositorio:
             if departamento_id is None:
                 raise RelacionInvalida("Primero debes guardar el departamento.")
         return (empleado.fecha_ingreso.isoformat(), empleado.sueldo_base,
-                empleado.direccion, empleado.telefono, empleado.email,
+                cifrar(empleado.direccion), cifrar(empleado.telefono), cifrar(empleado.email),
                 tipo, bono, tarifa, departamento_id)
 
     def guardar(self, empleado):

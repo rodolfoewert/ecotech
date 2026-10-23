@@ -3,6 +3,7 @@
 import sys
 import os
 import tempfile
+from getpass import getpass
 from datetime import date
 from pathlib import Path
 
@@ -18,6 +19,8 @@ from infraestructura.empleado_repositorio import EmpleadoRepositorio
 from infraestructura.esquema import inicializar_bd
 from infraestructura.proyecto_repositorio import ProyectoRepositorio
 from infraestructura.registro_tiempo_repositorio import RegistroTiempoRepositorio
+from infraestructura.usuario_repositorio import UsuarioRepositorio
+from seguridad.gestor_autenticacion import GestorAutenticacion
 
 
 def mostrar_empleado(empleado):
@@ -197,16 +200,53 @@ def cambiar_departamento():
     print("Departamento actualizado.")
 
 
-def menu():
+def iniciar_acceso():
+    """Prepara el primer administrador y permite tres intentos de acceso."""
+    gestor = GestorAutenticacion(UsuarioRepositorio())
+    if not gestor.repositorio.hay_usuarios():
+        print("Primera ejecución: crea tu administrador.")
+        nombre = input("Nuevo usuario: ")
+        clave = getpass("Contraseña (mínimo 10 caracteres): ")
+        if clave != getpass("Repite la contraseña: "):
+            raise ValueError("Las contraseñas no coinciden.")
+        gestor.registrar_usuario(nombre, clave, "admin")
+        print("Administrador creado.")
+    for intento in range(3):
+        usuario = input("Usuario: ")
+        clave = getpass("Contraseña: ")
+        if gestor.iniciar_sesion(usuario, clave):
+            return gestor
+        print("Usuario o contraseña incorrectos.")
+    raise ValueError("Se agotaron los intentos. Vuelve a iniciar el programa.")
+
+
+def crear_usuario(gestor):
+    """El administrador puede dar acceso de consulta a sus compañeros."""
+    nombre = input("Nuevo usuario: ")
+    rol = input("Rol (admin / consulta): ").strip().lower()
+    clave = getpass("Contraseña (mínimo 10 caracteres): ")
+    if clave != getpass("Repite la contraseña: "):
+        raise ValueError("Las contraseñas no coinciden.")
+    gestor.registrar_usuario(nombre, clave, rol)
+    print("Usuario guardado.")
+
+
+def menu(gestor):
     """Mantiene el menú disponible ante entradas inválidas o errores esperados."""
-    inicializar_bd()
     while True:
         print("\nEcoTech\n1 Crear empleado\n2 Consultar empleados\n3 Actualizar empleado"
               "\n4 Eliminar empleado\n5 Departamentos\n6 Proyectos\n7 Asignar proyecto"
-              "\n8 Registrar horas\n9 Cambiar departamento\n0 Salir")
+              "\n8 Registrar horas\n9 Cambiar departamento\n10 Crear usuario\n0 Salir")
         opcion = input("Opción: ").strip()
         if opcion == "0":
             return
+        if opcion not in ("1", "2", "3", "4", "5", "6", "7", "8", "9", "10"):
+            print("Elige una opción de la lista.")
+            continue
+        modulo = "consulta" if opcion == "2" else "administrar"
+        if not gestor.verificar_rol(gestor.usuario_actual, modulo):
+            print("Tu usuario no tiene permiso para esa opción.")
+            continue
         try:
             if opcion == "1":
                 crear_empleado()
@@ -226,6 +266,8 @@ def menu():
                 registrar_horas()
             elif opcion == "9":
                 cambiar_departamento()
+            elif opcion == "10":
+                crear_usuario(gestor)
             else:
                 print("Elige una opción de la lista.")
         except (ValueError, ErrorDeConexion) as error:
@@ -293,7 +335,9 @@ def main():
         if len(sys.argv) == 2 and sys.argv[1] == "--demo":
             ejecutar_laboratorio()
         elif len(sys.argv) == 1:
-            menu()
+            inicializar_bd()
+            gestor = iniciar_acceso()
+            menu(gestor)
         else:
             print("Usa python main.py o python main.py --demo.")
             return 1

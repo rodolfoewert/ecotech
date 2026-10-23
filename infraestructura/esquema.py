@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from infraestructura.conexion import obtener_conexion
+from seguridad.cifrado import cifrar, descifrar
 
 
 # Estas definiciones son fijas; no provienen del usuario.
@@ -30,3 +31,14 @@ def inicializar_bd():
                     conn.execute(f"ALTER TABLE {tabla} ADD COLUMN {cambio}")
         conn.execute("""INSERT OR IGNORE INTO empleado_proyecto (empleado_rut, proyecto_id)
                         SELECT empleado_rut, proyecto_id FROM registro_tiempo""")
+        contactos = conn.execute("SELECT rut, direccion, telefono, email FROM empleado").fetchall()
+        for fila in contactos:
+            valores = []
+            for dato in fila[1:]:
+                if dato.startswith("fernet:"):
+                    descifrar(dato)
+                    valores.append(dato)
+                else:
+                    valores.append(cifrar(dato))
+            conn.execute("UPDATE empleado SET direccion = ?, telefono = ?, email = ? "
+                         "WHERE rut = ?", (valores[0], valores[1], valores[2], fila[0]))

@@ -6,9 +6,10 @@ import tempfile
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from main import ejecutar_laboratorio, menu
+from infraestructura.esquema import inicializar_bd
 
 
 class PruebasConsola(unittest.TestCase):
@@ -18,10 +19,14 @@ class PruebasConsola(unittest.TestCase):
         with tempfile.TemporaryDirectory() as carpeta:
             with patch.dict(os.environ, {"DB_NOMBRE": str(Path(carpeta) / "menu.db"),
                                          "DB_MOTOR": "sqlite"}):
+                inicializar_bd()
+                gestor = Mock()
+                gestor.verificar_rol.return_value = True
                 salida = io.StringIO()
                 with redirect_stdout(salida):
-                    with patch("builtins.input", side_effect=["invalida", "5", "3", "abc", "0"]):
-                        menu()
+                    respuestas = ["invalida", "5", "3", "abc", "0"]
+                    with patch("builtins.input", side_effect=respuestas):
+                        menu(gestor)
                 self.assertIn("Elige una opción", salida.getvalue())
                 self.assertIn("No se pudo completar la operación", salida.getvalue())
 

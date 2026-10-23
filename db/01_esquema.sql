@@ -60,3 +60,10 @@ CREATE TABLE IF NOT EXISTS empleado_proyecto (
     FOREIGN KEY (empleado_rut) REFERENCES empleado(rut) ON DELETE CASCADE,
     FOREIGN KEY (proyecto_id) REFERENCES proyecto(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS usuario (
+    nombre TEXT PRIMARY KEY,
+    sal TEXT NOT NULL,
+    hash_clave TEXT NOT NULL,
+    rol TEXT NOT NULL CHECK (rol IN ('admin', 'consulta'))
+);

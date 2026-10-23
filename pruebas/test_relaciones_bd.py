@@ -8,6 +8,7 @@ import unittest
 from datetime import date
 from pathlib import Path
 from unittest.mock import patch
+from cryptography.fernet import Fernet
 
 from dominio.departamento import Departamento
 from dominio.empleado_contratista import EmpleadoContratista
@@ -30,7 +31,8 @@ class PruebasRelacionesBD(unittest.TestCase):
         temporal = tempfile.TemporaryDirectory()
         self.addCleanup(temporal.cleanup)
         self.ruta = Path(temporal.name) / "ecotech.db"
-        entorno = patch.dict(os.environ, {"DB_NOMBRE": str(self.ruta), "DB_MOTOR": "sqlite"})
+        entorno = patch.dict(os.environ, {"DB_NOMBRE": str(self.ruta), "DB_MOTOR": "sqlite",
+            "CLAVE_CIFRADO": Fernet.generate_key().decode("ascii")})
         entorno.start()
         self.addCleanup(entorno.stop)
         inicializar_bd()
@@ -125,7 +127,8 @@ class PruebasRelacionesBD(unittest.TestCase):
             self.proyectos.eliminar(self.proyecto.id)
         self.repo.eliminar(self.empleado.rut)
         with obtener_conexion() as conn:
-            self.assertEqual(conn.execute("SELECT COUNT(*) FROM empleado_proyecto").fetchone()[0], 0)
+            total = conn.execute("SELECT COUNT(*) FROM empleado_proyecto").fetchone()[0]
+            self.assertEqual(total, 0)
             self.assertEqual(conn.execute("SELECT COUNT(*) FROM registro_tiempo").fetchone()[0], 0)
         self.assertIsNotNone(self.proyectos.obtener(self.proyecto.id))
 
