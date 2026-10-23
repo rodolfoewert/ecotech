@@ -104,8 +104,10 @@ class EmpleadoRepositorio:
 
     def obtener(self, rut):
         """Devuelve un empleado completo o None si no existe."""
+        sql = CONSULTA
+        sql += " WHERE e.rut = ?"
         with obtener_conexion() as conn:
-            fila = conn.execute(CONSULTA + " WHERE e.rut = ?", (rut,)).fetchone()
+            fila = conn.execute(sql, (rut,)).fetchone()
             if fila is None:
                 return None
             empleado = self._fila_a_empleado(fila)
@@ -117,8 +119,9 @@ class EmpleadoRepositorio:
         if nombre_contiene:
             sql += " WHERE p.nombre LIKE ?"
             parametros.append(f"%{nombre_contiene}%")
+        sql += " ORDER BY p.rut"
         with obtener_conexion() as conn:
-            filas = conn.execute(sql + " ORDER BY p.rut", parametros).fetchall()
+            filas = conn.execute(sql, parametros).fetchall()
             empleados = []
             for fila in filas:
                 empleado = self._fila_a_empleado(fila)

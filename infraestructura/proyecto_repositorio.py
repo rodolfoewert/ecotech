@@ -40,8 +40,9 @@ class ProyectoRepositorio:
         if nombre_contiene:
             sql += " WHERE nombre LIKE ?"
             parametros.append(f"%{nombre_contiene}%")
+        sql += " ORDER BY id"
         with obtener_conexion() as conn:
-            filas = conn.execute(sql + " ORDER BY id", parametros).fetchall()
+            filas = conn.execute(sql, parametros).fetchall()
         return [self._fila_a_proyecto(fila) for fila in filas]
 
     def actualizar(self, proyecto):
