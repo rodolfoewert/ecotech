@@ -1,6 +1,6 @@
 """Menú y demostración por consola de EcoTech."""
 
-import argparse
+import sys
 import os
 import tempfile
 from datetime import date
@@ -9,7 +9,6 @@ from pathlib import Path
 from dominio.departamento import Departamento
 from dominio.empleado_planta import EmpleadoPlanta
 from dominio.empleado_contratista import EmpleadoContratista
-from dominio.excepciones import RutDuplicado, RelacionInvalida
 from dominio.informe import Informe
 from dominio.proyecto import Proyecto
 from dominio.registro_tiempo import RegistroTiempo
@@ -42,15 +41,21 @@ def crear_empleado():
     tipo = input("Contrato (1 planta / 2 contratista): ").strip()
     if tipo not in ("1", "2"):
         raise ValueError("El contrato debe ser 1 o 2.")
-    datos = dict(rut=input("RUT sin puntos: ").strip(), nombre=input("Nombre: "),
-                 fecha_ingreso=date.fromisoformat(input("Ingreso (AAAA-MM-DD): ").strip()),
-                 sueldo_base=float(input("Sueldo base de referencia: ")),
-                 direccion=input("Dirección (opcional): "),
-                 email=input("Correo (opcional): "), telefono=input("Teléfono (opcional): "))
+    rut = input("RUT sin puntos: ").strip()
+    nombre = input("Nombre: ")
+    fecha = date.fromisoformat(input("Ingreso (AAAA-MM-DD): ").strip())
+    sueldo = float(input("Sueldo base de referencia: "))
+    direccion = input("Dirección (opcional): ")
+    correo = input("Correo (opcional): ")
+    telefono = input("Teléfono (opcional): ")
     if tipo == "1":
-        empleado = EmpleadoPlanta(**datos, bono_sostenibilidad=float(input("Bono: ")))
+        bono = float(input("Bono: "))
+        empleado = EmpleadoPlanta(rut, nombre, fecha, sueldo, bono,
+                                  direccion, telefono, correo)
     else:
-        empleado = EmpleadoContratista(**datos, tarifa_hora=float(input("Tarifa por hora: ")))
+        tarifa = float(input("Tarifa por hora: "))
+        empleado = EmpleadoContratista(rut, nombre, fecha, sueldo, tarifa,
+                                       direccion, telefono, correo)
     departamento = DepartamentoRepositorio().obtener(int(input("ID del departamento: ")))
     if departamento is None:
         raise ValueError("Primero debes crear el departamento.")
@@ -167,7 +172,11 @@ def registrar_horas():
     for proyecto in empleado.proyectos:
         print(f"{proyecto.id} | {proyecto.nombre}")
     identificador = int(input("ID del proyecto asignado: "))
-    proyecto = next((p for p in empleado.proyectos if p.id == identificador), None)
+    proyecto = None
+    for asignado in empleado.proyectos:
+        if asignado.id == identificador:
+            proyecto = asignado
+            break
     if proyecto is None:
         raise ValueError("El empleado no está asignado a ese proyecto.")
     registro = RegistroTiempo(date.fromisoformat(input("Fecha (AAAA-MM-DD): ").strip()),
@@ -191,10 +200,6 @@ def cambiar_departamento():
 def menu():
     """Mantiene el menú disponible ante entradas inválidas o errores esperados."""
     inicializar_bd()
-    acciones = {"1": crear_empleado, "2": listar_empleados, "3": actualizar_empleado,
-                "4": eliminar_empleado, "5": gestionar_departamentos,
-                "6": gestionar_proyectos, "7": asignar_proyecto,
-                "8": registrar_horas, "9": cambiar_departamento}
     while True:
         print("\nEcoTech\n1 Crear empleado\n2 Consultar empleados\n3 Actualizar empleado"
               "\n4 Eliminar empleado\n5 Departamentos\n6 Proyectos\n7 Asignar proyecto"
@@ -202,12 +207,27 @@ def menu():
         opcion = input("Opción: ").strip()
         if opcion == "0":
             return
-        accion = acciones.get(opcion)
-        if accion is None:
-            print("Elige una opción de la lista.")
-            continue
         try:
-            accion()
+            if opcion == "1":
+                crear_empleado()
+            elif opcion == "2":
+                listar_empleados()
+            elif opcion == "3":
+                actualizar_empleado()
+            elif opcion == "4":
+                eliminar_empleado()
+            elif opcion == "5":
+                gestionar_departamentos()
+            elif opcion == "6":
+                gestionar_proyectos()
+            elif opcion == "7":
+                asignar_proyecto()
+            elif opcion == "8":
+                registrar_horas()
+            elif opcion == "9":
+                cambiar_departamento()
+            else:
+                print("Elige una opción de la lista.")
         except (ValueError, ErrorDeConexion) as error:
             print(f"No se pudo completar la operación: {error}")
 
@@ -251,7 +271,9 @@ def _demostrar():
 
 def ejecutar_laboratorio():
     """La demostración usa una base temporal y no toca los datos de trabajo."""
-    anteriores = {clave: os.environ.get(clave) for clave in ("DB_NOMBRE", "DB_MOTOR")}
+    anteriores = {}
+    for clave in ("DB_NOMBRE", "DB_MOTOR"):
+        anteriores[clave] = os.environ.get(clave)
     try:
         with tempfile.TemporaryDirectory() as carpeta:
             os.environ["DB_NOMBRE"] = str(Path(carpeta) / "demo.db")
@@ -267,14 +289,14 @@ def ejecutar_laboratorio():
 
 def main():
     """Inicia el menú o una demostración independiente."""
-    argumentos = argparse.ArgumentParser(description="Sistema EcoTech por consola")
-    argumentos.add_argument("--demo", action="store_true", help="Demostración con datos temporales")
-    opciones = argumentos.parse_args()
     try:
-        if opciones.demo:
+        if len(sys.argv) == 2 and sys.argv[1] == "--demo":
             ejecutar_laboratorio()
-        else:
+        elif len(sys.argv) == 1:
             menu()
+        else:
+            print("Usa python main.py o python main.py --demo.")
+            return 1
     except (ValueError, ErrorDeConexion) as error:
         print(f"No se pudo iniciar EcoTech: {error}")
         return 1

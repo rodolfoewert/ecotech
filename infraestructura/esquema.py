@@ -1,11 +1,9 @@
-"""Crea las tablas y actualiza una base anterior sin borrar sus datos."""
-
 from pathlib import Path
 
 from infraestructura.conexion import obtener_conexion
 
 
-# Las sentencias son constantes del programa, nunca texto ingresado por el usuario.
+# Estas definiciones son fijas; no provienen del usuario.
 CAMBIOS = {
     "departamento": ["gerente TEXT NOT NULL DEFAULT ''"],
     "proyecto": ["descripcion TEXT NOT NULL DEFAULT ''"],
@@ -24,10 +22,11 @@ def inicializar_bd():
     with obtener_conexion() as conn:
         conn.executescript("BEGIN;\n" + ruta.read_text(encoding="utf-8"))
         for tabla, cambios in CAMBIOS.items():
-            columnas = {fila[1] for fila in conn.execute(f"PRAGMA table_info({tabla})")}
+            columnas = []
+            for fila in conn.execute(f"PRAGMA table_info({tabla})"):
+                columnas.append(fila[1])
             for cambio in cambios:
                 if cambio.split()[0] not in columnas:
                     conn.execute(f"ALTER TABLE {tabla} ADD COLUMN {cambio}")
-        # Los registros antiguos demuestran que ya existía una asignación al proyecto.
         conn.execute("""INSERT OR IGNORE INTO empleado_proyecto (empleado_rut, proyecto_id)
                         SELECT empleado_rut, proyecto_id FROM registro_tiempo""")

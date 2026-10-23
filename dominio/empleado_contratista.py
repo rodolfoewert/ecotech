@@ -1,5 +1,3 @@
-"""Empleado cuyo pago depende de sus horas registradas."""
-
 from dominio.empleado import Empleado
 from dominio.validador_entradas import ValidadorEntradas as Validar
 
@@ -7,9 +5,11 @@ from dominio.validador_entradas import ValidadorEntradas as Validar
 class EmpleadoContratista(Empleado):
     """Calcula un pago bruto por hora; no suma el sueldo base de referencia."""
 
-    def __init__(self, rut, nombre, fecha_ingreso, sueldo_base, tarifa_hora, **contacto):
+    def __init__(self, rut, nombre, fecha_ingreso, sueldo_base, tarifa_hora,
+                 direccion="", telefono="", email=""):
         """Reutiliza los datos comunes y exige una tarifa positiva."""
-        super().__init__(rut, nombre, fecha_ingreso, sueldo_base, **contacto)
+        super().__init__(rut, nombre, fecha_ingreso, sueldo_base,
+                         direccion, telefono, email)
         self.tarifa_hora = tarifa_hora
 
     @property

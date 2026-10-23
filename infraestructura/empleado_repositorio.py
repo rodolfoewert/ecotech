@@ -1,5 +1,3 @@
-"""Persistencia del empleado, sus contratos y sus relaciones."""
-
 import sqlite3
 from datetime import date
 
@@ -24,12 +22,20 @@ class EmpleadoRepositorio:
     @staticmethod
     def _fila_a_empleado(fila):
         """Mantiene el mapeo del empleado en un solo lugar."""
-        datos = dict(rut=fila[0], nombre=fila[1], fecha_ingreso=date.fromisoformat(fila[2]),
-                     sueldo_base=fila[3], direccion=fila[4], telefono=fila[5], email=fila[6])
-        if fila[7] == "planta":
-            empleado = EmpleadoPlanta(**datos, bono_sostenibilidad=fila[8])
-        elif fila[7] == "contratista":
-            empleado = EmpleadoContratista(**datos, tarifa_hora=fila[9])
+        rut = fila[0]
+        nombre = fila[1]
+        fecha = date.fromisoformat(fila[2])
+        sueldo = fila[3]
+        direccion = fila[4]
+        telefono = fila[5]
+        correo = fila[6]
+        tipo = fila[7]
+        if tipo == "planta":
+            empleado = EmpleadoPlanta(rut, nombre, fecha, sueldo, fila[8],
+                                      direccion, telefono, correo)
+        elif tipo == "contratista":
+            empleado = EmpleadoContratista(rut, nombre, fecha, sueldo, fila[9],
+                                           direccion, telefono, correo)
         else:
             raise ValueError("La base contiene un tipo de contrato desconocido.")
         if fila[10] is not None:
@@ -90,7 +96,6 @@ class EmpleadoRepositorio:
             proyecto = proyectos.get(fila[4])
             if proyecto is None:
                 raise RelacionInvalida("Hay una jornada sin asignación al proyecto.")
-            # En datos antiguos la descripción no existía; se muestra una etiqueta explícita.
             registro = RegistroTiempo(date.fromisoformat(fila[1]), fila[2],
                 fila[3] or "Registro anterior sin descripción", empleado, proyecto, id=fila[0])
             empleado.registrar_hora(registro)
@@ -100,7 +105,10 @@ class EmpleadoRepositorio:
         """Devuelve un empleado completo o None si no existe."""
         with obtener_conexion() as conn:
             fila = conn.execute(CONSULTA + " WHERE e.rut = ?", (rut,)).fetchone()
-            return self._cargar_relaciones(conn, self._fila_a_empleado(fila)) if fila else None
+            if fila is None:
+                return None
+            empleado = self._fila_a_empleado(fila)
+            return self._cargar_relaciones(conn, empleado)
 
     def listar(self, nombre_contiene=None):
         """Busca por nombre sin interpretar el filtro como SQL."""
@@ -110,19 +118,24 @@ class EmpleadoRepositorio:
             parametros.append(f"%{nombre_contiene}%")
         with obtener_conexion() as conn:
             filas = conn.execute(sql + " ORDER BY p.rut", parametros).fetchall()
-            return [self._cargar_relaciones(conn, self._fila_a_empleado(f)) for f in filas]
+            empleados = []
+            for fila in filas:
+                empleado = self._fila_a_empleado(fila)
+                self._cargar_relaciones(conn, empleado)
+                empleados.append(empleado)
+            return empleados
 
     def actualizar(self, empleado):
         """Actualiza los datos del contrato y el nombre en una sola transacción."""
         datos = self._parametros(empleado)
         try:
             with obtener_conexion() as conn:
-                # No permitir que una edición vuelva inválidas jornadas existentes.
                 anterior = conn.execute("SELECT MIN(fecha) FROM registro_tiempo "
                     "WHERE empleado_rut = ?", (empleado.rut,)).fetchone()[0]
                 if anterior and empleado.fecha_ingreso.isoformat() > anterior:
                     raise RelacionInvalida("El ingreso no puede ser posterior a sus jornadas.")
-                cur = conn.execute("""UPDATE empleado SET fecha_ingreso = ?, sueldo_base = ?,
+                cur = conn.execute("""UPDATE empleado
+                    SET fecha_ingreso = ?, sueldo_base = ?,
                     direccion = ?, telefono = ?, email = ?, tipo_contrato = ?, bono = ?,
                     tarifa = ?, departamento_id = ? WHERE rut = ?""", datos + (empleado.rut,))
                 if cur.rowcount:

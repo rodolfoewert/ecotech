@@ -1,5 +1,3 @@
-"""Jornada de un empleado en un proyecto concreto."""
-
 from dominio.validador_entradas import ValidadorEntradas as Validar
 
 

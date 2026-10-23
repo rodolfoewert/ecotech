@@ -1,5 +1,3 @@
-"""Conexión a SQLite y control de transacciones."""
-
 import os
 import sqlite3
 from contextlib import contextmanager
@@ -33,7 +31,6 @@ def obtener_conexion():
         raise ErrorDeConexion("No se pudo abrir la base de datos. Revisa DB_NOMBRE.") from error
     try:
         conn.execute("PRAGMA foreign_keys = ON")
-        # El contexto de SQLite hace commit o rollback, incluso ante un error del dominio.
         with conn:
             yield conn
     except sqlite3.OperationalError as error:

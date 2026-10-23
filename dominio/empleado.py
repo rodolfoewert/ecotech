@@ -1,5 +1,3 @@
-"""Clase abstracta compartida por los dos tipos de contrato."""
-
 from abc import ABC, abstractmethod
 
 from dominio.persona import Persona
@@ -115,7 +113,10 @@ class Empleado(Persona, ABC):
             raise ValueError("La jornada no puede ser anterior al empleado o al proyecto.")
         if registro in self._registros:
             raise ValueError("Ese registro ya está agregado.")
-        horas_dia = sum(r.horas for r in self._registros if r.fecha == registro.fecha)
+        horas_dia = 0
+        for jornada in self._registros:
+            if jornada.fecha == registro.fecha:
+                horas_dia += jornada.horas
         if horas_dia + registro.horas > 24:
             raise ValueError("Un empleado no puede registrar más de 24 horas por día.")
         self._registros.append(registro)
@@ -123,7 +124,10 @@ class Empleado(Persona, ABC):
 
     def total_horas(self):
         """Suma las horas registradas sin modificar los registros."""
-        return sum(registro.horas for registro in self._registros)
+        total = 0
+        for registro in self._registros:
+            total += registro.horas
+        return total
 
     @abstractmethod
     def calcular_pago(self):

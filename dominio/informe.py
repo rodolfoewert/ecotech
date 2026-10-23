@@ -1,5 +1,3 @@
-"""Resumen sencillo de las horas de un proyecto."""
-
 from dominio.validador_entradas import ValidadorEntradas as Validar
 
 

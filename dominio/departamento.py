@@ -1,5 +1,3 @@
-"""Departamento y asignación exclusiva de empleados."""
-
 from dominio.validador_entradas import ValidadorEntradas as Validar
 
 
@@ -45,8 +43,9 @@ class Departamento:
             raise ValueError("Se esperaba un empleado.")
         if empleado.departamento is self:
             return False
-        if any(e.rut == empleado.rut for e in self._empleados):
-            raise ValueError("Ya hay otro objeto con ese RUT en el departamento.")
+        for actual in self._empleados:
+            if actual.rut == empleado.rut:
+                raise ValueError("Ya hay otro objeto con ese RUT en el departamento.")
         if empleado.departamento is not None:
             empleado.departamento._empleados.remove(empleado)
         self._empleados.append(empleado)

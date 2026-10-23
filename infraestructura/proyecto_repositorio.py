@@ -1,5 +1,3 @@
-"""CRUD de proyectos, separado del modelo de negocio."""
-
 import sqlite3
 from datetime import date
 

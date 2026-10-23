@@ -1,5 +1,3 @@
-"""Persistencia de jornadas con validación de asignación y horas diarias."""
-
 import sqlite3
 
 from dominio.excepciones import RelacionInvalida

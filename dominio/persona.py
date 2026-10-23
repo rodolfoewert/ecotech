@@ -1,5 +1,3 @@
-"""Datos comunes a las personas del sistema."""
-
 from dominio.validador_entradas import ValidadorEntradas as Validar
 
 

@@ -1,5 +1,3 @@
-"""Validaciones reutilizables del modelo."""
-
 import math
 import re
 from datetime import date

@@ -1,5 +1,3 @@
-"""Proyecto con participantes y registros de horas."""
-
 from dominio.validador_entradas import ValidadorEntradas as Validar
 
 
@@ -72,7 +70,10 @@ class Proyecto:
 
     def total_horas(self):
         """Suma el tiempo dedicado a este proyecto."""
-        return sum(registro.horas for registro in self._registros)
+        total = 0
+        for registro in self._registros:
+            total += registro.horas
+        return total
 
     def __repr__(self):
         """Representación para la demostración."""
