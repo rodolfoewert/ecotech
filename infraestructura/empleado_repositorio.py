@@ -1,5 +1,7 @@
+import sqlite3
 from datetime import date
 from dominio.empleado import Empleado
+from dominio.excepciones import RutDuplicado, RelacionInvalida
 from infraestructura.conexion import obtener_conexion
 
 class EmpleadoRepositorio:
@@ -14,16 +16,21 @@ class EmpleadoRepositorio:
         )
 
     def guardar(self, empleado: Empleado):
-        with obtener_conexion() as conn:
-            conn.execute(
-                "INSERT INTO persona (rut, nombre) VALUES (?, ?)",
-                (empleado.rut, empleado.nombre),
-            )
-            conn.execute(
-                """INSERT INTO empleado (rut, fecha_ingreso, sueldo_base)
-                   VALUES (?, ?, ?)""",
-                (empleado.rut, empleado.fecha_ingreso.isoformat(), empleado.sueldo_base),
-            )
+        try:
+            with obtener_conexion() as conn:
+                conn.execute(
+                    "INSERT INTO persona (rut, nombre) VALUES (?, ?)",
+                    (empleado.rut, empleado.nombre),
+                )
+                conn.execute(
+                    """INSERT INTO empleado (rut, fecha_ingreso, sueldo_base)
+                       VALUES (?, ?, ?)""",
+                    (empleado.rut, empleado.fecha_ingreso.isoformat(), empleado.sueldo_base),
+                )
+        except sqlite3.IntegrityError as error:
+            if error.sqlite_errorname in ("SQLITE_CONSTRAINT_PRIMARYKEY", "SQLITE_CONSTRAINT_UNIQUE"):
+                raise RutDuplicado("Ya existe una persona con ese RUT.") from error
+            raise RelacionInvalida("No se pudo guardar el empleado por sus datos relacionados.") from error
         return empleado
 
     def obtener(self, rut: str):
@@ -59,5 +66,6 @@ class EmpleadoRepositorio:
     def eliminar(self, rut: str):
         with obtener_conexion() as conn:
             cur = conn.execute("DELETE FROM empleado WHERE rut = ?", (rut,))
-            conn.execute("DELETE FROM persona WHERE rut = ?", (rut,))
+            if cur.rowcount:
+                conn.execute("DELETE FROM persona WHERE rut = ?", (rut,))
         return cur.rowcount > 0

@@ -2,7 +2,8 @@ from datetime import date
 import os
 from dominio.empleado import Empleado
 from dominio.departamento import Departamento
-from infraestructura.conexion import obtener_conexion
+from infraestructura.conexion import ErrorDeConexion, obtener_conexion
+from dominio.excepciones import RutDuplicado, RelacionInvalida
 from infraestructura.empleado_repositorio import EmpleadoRepositorio
 from infraestructura.departamento_repositorio import DepartamentoRepositorio
 

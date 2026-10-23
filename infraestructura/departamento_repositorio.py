@@ -1,4 +1,6 @@
+import sqlite3
 from dominio.departamento import Departamento
+from dominio.excepciones import RelacionInvalida
 from infraestructura.conexion import obtener_conexion
 
 class DepartamentoRepositorio:
@@ -43,6 +45,11 @@ class DepartamentoRepositorio:
         return cur.rowcount
 
     def eliminar(self, id: int):
-        with obtener_conexion() as conn:
-            cur = conn.execute("DELETE FROM departamento WHERE id = ?", (id,))
+        try:
+            with obtener_conexion() as conn:
+                cur = conn.execute("DELETE FROM departamento WHERE id = ?", (id,))
+        except sqlite3.IntegrityError as error:
+            raise RelacionInvalida(
+                "No puedes eliminar un departamento que tiene empleados."
+            ) from error
         return cur.rowcount > 0

@@ -1,34 +1,44 @@
+"""Conexión a SQLite y control de transacciones."""
+
 import os
 import sqlite3
-from pathlib import Path
 from contextlib import contextmanager
-from typing import Iterator
+from pathlib import Path
+
 from dotenv import load_dotenv
 
-# Ruta absoluta al archivo .env ubicado en la raíz del proyecto
 RUTA_RAIZ = Path(__file__).resolve().parent.parent
-RUTA_ENV = RUTA_RAIZ / ".env"
-load_dotenv(dotenv_path=RUTA_ENV)
+load_dotenv(RUTA_RAIZ / ".env")
+
 
 class ErrorDeConexion(Exception):
-    """La base de datos no está disponible."""
+    """No se pudo acceder a la base de datos."""
+
 
 @contextmanager
-def obtener_conexion() -> Iterator[sqlite3.Connection]:
-    # Lee DB_NOMBRE del entorno; si no existe, toma 'ecotech.db' en la raíz como respaldo
-    nombre_db = os.environ.get("DB_NOMBRE") or "ecotech.db"
-    ruta_db = RUTA_RAIZ / nombre_db
-
-    conn = None
+def obtener_conexion():
+    """Confirma los cambios si todo resulta bien y los deshace si falla."""
+    motor = os.environ.get("DB_MOTOR", "sqlite").strip().lower()
+    if motor != "sqlite":
+        raise ErrorDeConexion("Este proyecto utiliza SQLite. Revisa DB_MOTOR.")
+    nombre = os.environ.get("DB_NOMBRE", "").strip()
+    if not nombre:
+        raise ErrorDeConexion("Falta DB_NOMBRE. Copia .env.example a .env.")
+    ruta = Path(nombre)
+    if not ruta.is_absolute():
+        ruta = RUTA_RAIZ / ruta
     try:
-        conn = sqlite3.connect(ruta_db)
-        conn.execute("PRAGMA foreign_keys = ON")   # SQLite las ignora si no se activan
-        yield conn
-        conn.commit()
-    except Exception as e:
-        if conn:
-            conn.rollback()
-        raise ErrorDeConexion(f"No se pudo operar sobre la base: {e}") from e
+        conn = sqlite3.connect(ruta)
+    except sqlite3.OperationalError as error:
+        raise ErrorDeConexion("No se pudo abrir la base de datos. Revisa DB_NOMBRE.") from error
+    try:
+        conn.execute("PRAGMA foreign_keys = ON")
+        # El contexto de SQLite hace commit o rollback, incluso ante un error del dominio.
+        with conn:
+            yield conn
+    except sqlite3.OperationalError as error:
+        raise ErrorDeConexion(
+            "No se pudo completar la operación. Revisa el esquema o si la base está bloqueada."
+        ) from error
     finally:
-        if conn:
-            conn.close()
+        conn.close()
