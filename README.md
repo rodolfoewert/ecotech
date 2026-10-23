@@ -128,10 +128,16 @@ cifrado. La autenticación guarda un hash por cuenta en lugar del atributo globa
 de sesión y los permisos se controlan por separado.
 Las bases antiguas conservan sus tipos de columnas y restricciones originales:
 la actualización agrega columnas y relaciones, pero no reconstruye las tablas.
-También falta cerrar con el equipo la correspondencia final del UML y registrar
-sus aportes reales para el informe y la defensa individual.
+Las diferencias con el UML anterior quedan documentadas en el informe ES02;
+el equipo debe explicarlas durante la defensa individual.
 
 ## Equipo
 
-Repositorio de Rodolfo Ewert. Los integrantes, el líder de esta etapa y sus
-aportes se completan con la información real del equipo antes de entregar.
+Sección informada: TI3021. Líder para esta entrega: Rodolfo Ewert.
+
+- Rodolfo Ewert: código base, integración de cambios y coordinación de la entrega.
+- Stefan Trostel: revisión general del código junto a Rodolfo y pruebas de funcionamiento.
+
+La entrega grupal usa como base este repositorio. No se asignan a Stefan archivos
+específicos que el equipo no haya identificado ni se inventan porcentajes de autoría.
+El informe registra el apoyo de IA, los ajustes realizados y las pruebas ejecutadas.
